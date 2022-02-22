@@ -6,6 +6,7 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 ## Scenario
 
 **PLC**: Siemens S7 1200
+**HMI**: Windows Form C# application
 
 
 ### Communication libraries
