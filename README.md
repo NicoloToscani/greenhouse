@@ -15,6 +15,6 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 
 ### Communication libraries
-[Sharp7](http://snap7.sourceforge.net/sharp7.html): C# port of Snap7 client
+[Sharp7](http://snap7.sourceforge.net/sharp7.html): C# port of Snap7 client for interfacing with Siemens S7 PLCs
 
 [Settimino](http://settimino.sourceforge.net/): library for interfacing ARDUINO / ESP8266 NodeMCU / ESP32 natively with Siemens S7 PLCs
