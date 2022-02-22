@@ -12,7 +12,9 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 **ESP32**: used to put data into the cloud
 
-### Software setup setup
+### Software setup
+* TIA Portal
+* Visual Studio 2019
 
 ### Communication libraries
 [Sharp7](http://snap7.sourceforge.net/sharp7.html): C# port of Snap7 client for interfacing with Siemens S7 PLCs
