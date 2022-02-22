@@ -10,7 +10,7 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 **HMI**: Windows Form C# application
 
-**ESP32**: used to put data into the cloud
+**ESP32**: used to put data into ThingSpeak cloud
 
 ### Software setup
 * TIA Portal
