@@ -9,6 +9,10 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 **HMI**: Windows Form C# application
 
+**ESP32**: used to put data into the cloud
+
+
+
 
 ### Communication libraries
 [Sharp7](http://snap7.sourceforge.net/sharp7.html): C# port of Snap7 client
