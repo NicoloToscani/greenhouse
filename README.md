@@ -5,6 +5,8 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 ## Scenario
 
+**PLC**: Siemens S7 1200
+
 
 ### Communication libraries
 [Sharp7](http://snap7.sourceforge.net/sharp7.html): C# port of Snap7 client
