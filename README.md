@@ -23,4 +23,4 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 [Eclipse Paho](https://www.eclipse.org/paho/index.php?page=clients/dotnet/index.php): library for interfacing HMI with ThingSpeak analytics platform
 
-[LiveCharts](https://lvcharts.net/): real time data visualization library
+[LiveCharts](https://lvcharts.net/): real time data visualization for .NET library
