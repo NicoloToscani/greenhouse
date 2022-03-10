@@ -1,0 +1,13 @@
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\bin\Debug\netcoreapp3.1\Publisher_MQTT.exe
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\bin\Debug\netcoreapp3.1\Publisher_MQTT.deps.json
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\bin\Debug\netcoreapp3.1\Publisher_MQTT.runtimeconfig.json
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\bin\Debug\netcoreapp3.1\Publisher_MQTT.runtimeconfig.dev.json
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\bin\Debug\netcoreapp3.1\Publisher_MQTT.dll
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\bin\Debug\netcoreapp3.1\Publisher_MQTT.pdb
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.csprojAssemblyReference.cache
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.AssemblyInfoInputs.cache
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.AssemblyInfo.cs
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.csproj.CoreCompileInputs.cache
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.dll
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.pdb
+C:\Users\beota\Desktop\PLC\Publisher_MQTT\Publisher_MQTT\obj\Debug\netcoreapp3.1\Publisher_MQTT.genruntimeconfig.cache
