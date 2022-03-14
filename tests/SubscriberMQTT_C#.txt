@@ -1,0 +1,74 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+
+using uPLibrary.Networking.M2Mqtt;
+using uPLibrary.Networking.M2Mqtt.Messages;
+using System.Threading;
+
+namespace Thingspeak
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+
+            // Configure MQTT X to subscribe to updates of field1 from your channel 1666592 using mqtt3.thingspeak.com and port 1883.
+            MqttClient mqttClient;
+
+            String brokerURL = "mqtt3.thingspeak.com";
+            mqttClient = new MqttClient(brokerURL);
+     
+
+            mqttClient.MqttMsgPublishReceived += MqttClient_MqttMsgPublishReceived;
+            string clientId = "SubscriberMQTT";   // client ID
+            string username = "GCIDJicGCzsQLz03BygSIDo";   // username
+            string password = "pANFaxFccf6DvRtHXxsjWm43";  // password
+
+            Console.WriteLine("--- SUBSCRIBER ---");
+
+            
+            try
+            {
+
+                // Connect to MQTT broker
+                do
+                {
+                    Console.WriteLine("Connessione....");
+                    mqttClient.Connect(clientId, username, password);
+                    
+                }
+                while (mqttClient.IsConnected == false);
+                
+                Console.WriteLine("\nConnesso al broker!\n");
+
+                byte[] qosLevels = { MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE };
+                // Subscribe to MQTT broker
+                mqttClient.Subscribe(new string[] { "channels/1663304/subscribe/fields/field1" }, qosLevels);
+
+            }
+            catch (Exception exception)
+            {
+
+                Console.WriteLine(exception.ToString());
+            }
+
+            // // Console remain open
+            Console.WriteLine("In attesa .... ");
+            //while (Console.Read() != 'q') ;
+            //Console.ReadKey();
+
+        }
+
+        // When arrived new data
+        private static void MqttClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+        {
+            var message = Encoding.UTF8.GetString(e.Message);
+            Console.WriteLine("Temperature: " + message + " °C");
+
+        }
+    }
+}
