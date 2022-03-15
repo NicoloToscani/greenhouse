@@ -1,26 +1,9 @@
+//===================================== HIVE MQTT ==============================
 #include <Arduino.h>
-#include <PubSubClient.h>
+#include <Arduino.h>
 #include <WiFi.h>
+#include <PubSubClient.h>
 #include <SimpleDHT.h>
-//#include "ThingSpeak.h"
-WiFiClient  client;
-
-// Dichiaro variabili Wi-Fi
-const char* ssid = "iPhone Beo";   // nome rete
-const char* password = "pila2021";     // password rete
-
-// Definisco variabili relative alla parte server (thingspeak)
-#define channelID 1663304   // id canale
-#define mqttPort 1883       // porta mqtt
-
-// Definisco variabili per la connessione al server
-const char* server = "mqtt3.thingspeak.com";            // indirizzo servizio
-const char mqttUserName[] = "NisiMj05GwUqCSM2NDMZCCg";  // username
-const char clientID[] = "NisiMj05GwUqCSM2NDMZCCg";      // id del client
-const char mqttPass[] = "P0Z8KfwtqLLBSwtaj+mgyLdE";     // password
-
-unsigned long myChannelNumber = channelID;              
-const char * myWriteAPIKey = "0V77AVSPAOLE5AQH";  // API canale thingspeak
 
 // Inizializzo variabili sensore luce
 int light;
@@ -29,149 +12,119 @@ int light;
 int pinDHT11 = 32;
 SimpleDHT11 dht11(pinDHT11);
 
-// Inizializzo variabili sensore gas
-#define Fire 35
+//const char *SSID = "iPhone Beo";
+//const char *PWD = "pila2021";
 
-// Definisco valore timer per la pubblicazione automatica dei valori
-unsigned long lastTime = 0;
-unsigned long timerDelay = 20000; // minimo 20 secondi per la pubblicazione
+// Dichiaro variabili Wi-Fi
+const char* ssid = "iPhone Beo";   // nome rete
+const char* password = "pila2021";     // password rete
 
-// Definisco variabili per **elaborazione**
 int status = WL_IDLE_STATUS; 
 long lastPublishMillis = 0;
 int connectionDelay = 1;
 int updateInterval = 15;
-PubSubClient mqttClient( client );
 
-
-void mqttSubscriptionCallback( char* topic, byte* payload, unsigned int length ) {
-  // Print the details of the message that was received to the serial monitor.
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+/*
+// Connessione al wi-fi
+void connectToWiFi() {
+  Serial.print("Connectiog to ");
+ 
+  WiFi.begin(SSID, PWD);
+  Serial.println(SSID);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
   }
-  Serial.println();
+  Serial.print("Connected.");
+}
+*/
+
+
+//  Connessione MQTT client
+WiFiClient wifiClient;
+PubSubClient mqttClient(wifiClient); 
+
+char *mqttServer = "broker.hivemq.com";
+int mqttPort = 1883;
+
+void setupMQTT() {
+  mqttClient.setServer(mqttServer, mqttPort);
+  // set the callback function
+  mqttClient.setCallback(callback);
 }
 
-// Subscribe to ThingSpeak channel for updates.
-void mqttSubscribe( long subChannelID ){
-  String myTopic = "channels/"+String( subChannelID )+"/subscribe";
-  mqttClient.subscribe(myTopic.c_str());
-}
 
-// Parte di pubblicazione valori sul server
-void mqttPublish(long pubChannelID, String message) {
-  // sintassi stringa connessione
-  String topicString ="channels/" + String( pubChannelID ) + "/publish";
-  mqttClient.publish( topicString.c_str(), message.c_str() );
-}
 
-// Connessione Mqtt server
-void mqttConnect() {
-  // Loop until connected.
-  while ( !mqttClient.connected() )
-  {
-    // Connect to the MQTT broker.
-    if ( mqttClient.connect( clientID, mqttUserName, mqttPass ) ) {
-      Serial.print( "MQTT to " );
-      Serial.print( server );
-      Serial.print (" at port ");
-      Serial.print( mqttPort );
-      Serial.println( " successful." );
-    } else {
-      Serial.print( "MQTT connection failed, rc = " );
-      // See https://pubsubclient.knolleary.net/api.html#state for the failure code explanation.
-      Serial.print( mqttClient.state() );
-      Serial.println( " Will try again in a few seconds" );
-      delay( connectionDelay*1000 );
-    }
+// Riconnessione
+void reconnect() {
+  Serial.println("Try to connecting to MQTT Broker...");
+  while (!mqttClient.connected()) {
+      Serial.println("Reconnecting to MQTT Broker..");
+      delay(2000);
+      
+      String clientId = "Test";
+      clientId += String(random(0xffff), HEX);
+      
+      if (mqttClient.connect(clientId.c_str())) {
+        Serial.println("Connected to mqtt broker.");
+        // subscribe to topic
+        mqttClient.subscribe("/swa/commands");
+      }      
   }
 }
 
 
 
-// =============== SETUP ===============
+// ===================== SETUP ===================
 void setup() {
   Serial.begin(115200);  //Initialize serial
   //initBME();
   Serial.println("start...");
 
-  pinMode(Fire, INPUT);
-  
-  WiFi.mode(WIFI_STA);  
-  
-  //ThingSpeak.begin(client);  // Initialize ThingSpeak
-  mqttClient.setServer( server, mqttPort ); 
-  // Set the MQTT message handler function.
-  mqttClient.setCallback( mqttSubscriptionCallback );
-  // Set the buffer to handle the returned JSON. NOTE: A buffer overflow of the message buffer will result in your callback not being invoked.
-  mqttClient.setBufferSize( 2048 ); 
-
-   // Connetto o tento la riconnessione verso il wifi
+  // Connetto o tento la riconnessione verso il wifi
     if(WiFi.status() != WL_CONNECTED){
-      Serial.print("Attempting to connect");
+      Serial.print("Attempting to connection to wi-fi...");
       while(WiFi.status() != WL_CONNECTED){
         WiFi.begin((char*)ssid, password); 
         delay(5000);     
       } 
     }
+  
+  setupMQTT();
 }
 
 
 
-// =============== LOOP ===============
-void loop() {  
-  //if ((millis() - lastTime) > timerDelay) {
-      //Serial.println(mqttClient.connected());
-      //controllo se connesso
-      if (!mqttClient.connected()) {    
-        Serial.println("\nNON connesso.");     
-        mqttConnect(); 
-        mqttSubscribe(channelID); 
-        Serial.println("\nConnected.");
-      }
+// ===================== LOOP ===================
+void loop() {
+    if (!mqttClient.connected())
+        reconnect();
+        mqttClient.loop();
 
-      // lettura valori sensore luce
-      light = analogRead(34);
-      float fLight = 3.3 * light / 4096;
+    // lettura valori sensore luce
+    light = analogRead(34);
+    float fLight = 3.3 * light / 4096;
 
-      // lettura valori sensore DHT11     
-      byte temperature = 0;
-      byte humidity = 0;
-      int err = SimpleDHTErrSuccess;
-      if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
-        Serial.print("Read DHT11 failed, err="); Serial.print(SimpleDHTErrCode(err));
-        Serial.print(","); Serial.println(SimpleDHTErrDuration(err)); delay(1000);
-        return;
-      } 
+    long now = millis();
+    long last_time = 0;    
 
-      // lettura valori sensore gas  
-      int valFire = digitalRead(Fire);
-      //int valGas = map(quantGas, 0, 1023, 0, 255);
-          
+    // Publishing data throgh MQTT
+    Serial.println("Pubblicazione valori: ");        
+    int data = int(light);
+    Serial.print("Light: ");  
+    Serial.print(data);
+    Serial.println(" lux");
+    
+    mqttClient.publish("/swa/light", String(data).c_str());
+    delay(20000);     
+}
 
-      Serial.println("\n\nPUBBLICAZIONE, valore:");
-      Serial.print("Luce: "); Serial.println(String (fLight));
-      Serial.print("Temperatura: "); Serial.print((int)temperature); Serial.println(" *C"); 
-      Serial.print("Umidità: "); Serial.print((int)humidity); Serial.println(" H");
-      Serial.print("Fiamma: "); Serial.print(valFire);
-      delay(5000);
-      
-      /*
-      //pubblico valori sul server   
-      mqttPublish( channelID, (String("field1=")+String(fLight)));
-      delay(21000);
-      mqttPublish( channelID, (String("field2=")+String((int)temperature)));
-      delay(21000);
-      mqttPublish( channelID, (String("field3=")+String((int)humidity)));
-      delay(21000);
-      mqttPublish( channelID, (String("field4=")+String(valGas)));
-      delay(21000);
-      
-      lastPublishMillis = millis();*/
 
-      // aggiungo il delay di 20 secondi
-      //delay(20000);
- }
+// Call back
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Callback - ");
+  Serial.print("Message:");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+}
