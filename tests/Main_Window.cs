@@ -18,6 +18,7 @@ namespace Progetto_Supervisione_ITIS
 {
     public partial class Main_Window : Form
     {
+        float light = 0;
 
         private readonly System.Timers.Timer _timer;
 
@@ -25,8 +26,8 @@ namespace Progetto_Supervisione_ITIS
         private readonly System.Timers.Timer _chartTimer;
 
         public ChartValues<ObservableValue> Values { get; set; }
-        public ChartValues<ObservableValue> Values_temp { get; set; }
-        public ChartValues<ObservableValue> Values_hum { get; set; }
+        public ChartValues<ObservableValue> Temperature { get; set; }
+        public ChartValues<ObservableValue> Humidity { get; set; }
 
         public string IpAddress
         {
@@ -94,14 +95,17 @@ namespace Progetto_Supervisione_ITIS
         S7PlcService s7PlcService = new S7PlcService();
 
         // MQTT service: riceve le 2 liste da plottare
-        Rest MQTTSubscriber = new Rest();
+        //Rest MQTTSubscriber = new Rest();
+
+        Subscriber_MQTT subscriber_MQTT = new Subscriber_MQTT();
+
 
         // Liste ricezione dati da servizio MQTT
         List<String> temperatureValues;
         List<String> timestampValues;
         List<float> values;
-        List<float> values_temp;
-        List<float> values_hum;
+        List<float> temperature;
+        List<float> humidity;
 
 
         public Main_Window()
@@ -119,7 +123,33 @@ namespace Progetto_Supervisione_ITIS
             _chartTimer.Elapsed += OnTimerElapsedChart;
             _chartTimer.Start();
 
-            cartesianChart1.LegendLocation = LegendLocation.Right;
+            Values = new ChartValues<ObservableValue>
+            {
+
+            };
+
+            Temperature = new ChartValues<ObservableValue>
+            {
+
+            };
+
+            Humidity = new ChartValues<ObservableValue>
+            {
+
+            };
+
+            //cartesianChart1.LegendLocation = LegendLocation.Right;
+
+            // definisco valore gauge
+            SD_light.From = 0;
+            SD_light.To = 100;
+
+            SD_temperature.From = 0;
+            SD_temperature.To = 100;
+
+            SD_humidity.From = 0;
+            SD_humidity.To = 100;
+
 
 
         }
@@ -132,14 +162,16 @@ namespace Progetto_Supervisione_ITIS
                 Values.Add(new ObservableValue(this.values.Last()));
             }
 
-            if (this.values_temp.Count > 0)
+            // Se c'è almeno un dato
+            if (this.temperature.Count > 0)
             {
-                Values_temp.Add(new ObservableValue(this.values_temp.Last()));
+                Temperature.Add(new ObservableValue(this.temperature.Last()));
             }
 
-            if (this.values_hum.Count > 0)
+            // Se c'è almeno un dato
+            if (this.humidity.Count > 0)
             {
-                Values_hum.Add(new ObservableValue(this.values_hum.Last()));
+                Humidity.Add(new ObservableValue(this.humidity.Last()));
             }
         }
 
@@ -152,8 +184,10 @@ namespace Progetto_Supervisione_ITIS
 
         private void Main_Window_Load(object sender, EventArgs e)
         {
-            /*
-            // live chart light
+            TXB_temperature.Text = "Low";
+            TXB_humidity.Text = "Low";
+
+            // Grafico luce
             cartesianChart1.Series.Add(new LineSeries
             {
                 Values = Values,
@@ -162,24 +196,20 @@ namespace Progetto_Supervisione_ITIS
                 DataLabels = true,
                 Title = "Light"
 
-            });
-
-            cartesianChart1.AxisX.Add(new Axis
-            {
-                Title = "Timestamp",
-                ShowLabels = false,
 
             });
 
+            
             cartesianChart1.AxisY.Add(new Axis
             {
-                Title = "Lux"
-            });*/
-            
-            // live chart temperature
-            LIVEC_temperature.Series.Add(new LineSeries
+                Title = "Lux",
+                
+            });
+
+            // Grafico temperatura
+            LVCHART_temperature.Series.Add(new LineSeries
             {
-                Values = Values_temp,
+                Values = Temperature,
                 StrokeThickness = 4,
                 PointGeometrySize = 0,
                 DataLabels = true,
@@ -187,22 +217,15 @@ namespace Progetto_Supervisione_ITIS
 
             });
 
-            LIVEC_temperature.AxisX.Add(new Axis
-            {
-                Title = "Timestamp",
-                ShowLabels = false,
-
-            });
-
-            LIVEC_temperature.AxisY.Add(new Axis
+            LVCHART_temperature.AxisY.Add(new Axis
             {
                 Title = "°C"
             });
 
-            // live chart humidity
-            LIVEC_humidity.Series.Add(new LineSeries
+            // Grafico umidità
+            LVCHART_Humid.Series.Add(new LineSeries
             {
-                Values = Values_hum,
+                Values = Humidity,
                 StrokeThickness = 4,
                 PointGeometrySize = 0,
                 DataLabels = true,
@@ -210,22 +233,15 @@ namespace Progetto_Supervisione_ITIS
 
             });
 
-            LIVEC_humidity.AxisX.Add(new Axis
-            {
-                Title = "Timestamp",
-                ShowLabels = false,
-
-            });
-
-            LIVEC_humidity.AxisY.Add(new Axis
+            LVCHART_Humid.AxisY.Add(new Axis
             {
                 Title = "%"
             });
+
+
         }
 
         
-
-
 
         private async void BT_Start_Click_1(object sender, EventArgs e)
         {
@@ -252,6 +268,19 @@ namespace Progetto_Supervisione_ITIS
         {
             await s7PlcService.BT_reset_plc();
         }
+
+
+        private async Task Start_Light()
+        {
+            await s7PlcService.Start_light();
+        }
+
+
+        private async Task Stop_Light()
+        {
+            await s7PlcService.Stop_light();
+        }
+
 
         /*
         private void OnPlcServiceValuesRefreshed(object sender, EventArgs e)
@@ -313,9 +342,57 @@ namespace Progetto_Supervisione_ITIS
                     // Aggiorno il grafico , ottengo le liste aaggiornate popolate in ricezione MQTT
                     // this.temperatureValues = MQTTSubscriber.getTemperature();
                     // this.timestampValues = MQTTSubscriber.getTimestamp();
-                    this.values = MQTTSubscriber.getValues();
+                    this.values = subscriber_MQTT.getValues();
+                    this.temperature = subscriber_MQTT.getTemperature();
+                    this.humidity = subscriber_MQTT.getHumidity();
 
+                    // Aggiungo il valore ottenuto ai gauge
+                    if (this.values.Count > 0)
+                    {
+                        light = this.values.Last();
+                        SD_light.Value = light;
+                    }
 
+                    if (this.temperature.Count > 0)
+                    {
+                        float temperature = this.temperature.Last();
+                        SD_temperature.Value = temperature;
+
+                        if(temperature <= 29)
+                        {
+                            TXB_temperature.Text = "Medium";
+                        }
+                        else if(temperature >= 30)
+                        {
+                            TXB_temperature.Text = "High";
+                        }
+                    }
+
+                    if (this.humidity.Count > 0)
+                    {
+                        float humidity = this.humidity.Last();
+                        SD_humidity.Value = humidity;
+
+                        if (humidity <= 35)
+                        {
+                            TXB_humidity.Text = "Medium";
+                        }
+                        else if (humidity >= 36)
+                        {
+                            TXB_humidity.Text = "High";
+                        }
+                    }
+
+                    if (light <= 50)
+                    {
+                        LB_light.On = true;
+                        Start_Light();
+                    }
+                    else if (light > 50)
+                    {
+                        LB_light.On = false;
+                        Stop_Light();
+                    }
 
                 });
             }catch(Exception e)
@@ -361,6 +438,21 @@ namespace Progetto_Supervisione_ITIS
         }
 
         private void TBX_sensore_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cartesianChart1_ChildChanged(object sender, System.Windows.Forms.Integration.ChildChangedEventArgs e)
+        {
+
+        }
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label6_Click(object sender, EventArgs e)
         {
 
         }
