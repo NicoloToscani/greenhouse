@@ -21,7 +21,7 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 [Settimino](http://settimino.sourceforge.net/): library for interfacing ARDUINO / ESP8266 NodeMCU / ESP32 natively with Siemens S7 PLCs
 
-[Eclipse Paho](https://www.eclipse.org/paho/index.php?page=clients/dotnet/index.php): library for interfacing HMI with HiveMQ analytics platform
+[Eclipse Paho](https://www.eclipse.org/paho/index.php?page=clients/dotnet/index.php): library for interfacing HMI with HiveMQ MQTT broker
 
 [LiveCharts](https://lvcharts.net/): real time data visualization for .NET library
 
