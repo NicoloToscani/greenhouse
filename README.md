@@ -10,7 +10,7 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 
 **HMI**: Windows Form C# application
 
-**ESP32**: used to put data into ThingSpeak analytics platform
+**ESP32**: used to put data into HiveMQ MQTT broker
 
 ### Software setup
 * TIA Portal
