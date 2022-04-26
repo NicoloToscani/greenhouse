@@ -58,11 +58,10 @@ void loop() //OB1
               if (Connect()==0){delay(500);}  
               }  //if everything is fine this line schould be made only once. It is checking are we connected with PLC, if not then the program is jumping to CONNECT function
             
-            PLC_Inputs(); // Read from PLC
+            // PLC_Inputs(); // Read from PLC
 
             // Read sensor data
-
-
+            
             // lettura valori sensore luce
             light = analogRead(34);            
             int data = map(light, 0, 4096, 0, 100);
@@ -74,9 +73,8 @@ void loop() //OB1
             if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
               Serial.print("Read DHT11 failed, err="); Serial.print(SimpleDHTErrCode(err));
               Serial.print(","); Serial.println(SimpleDHTErrDuration(err)); delay(1000);
-              return;
+              // return;
             }
-
 
 
             // After read sensor data send values to PLC
@@ -99,8 +97,82 @@ void PLC_Inputs(){
 
 // Write value to PLC
 void WriteToPLC(){
-                  Buffer[0] = PLC_inputs_byte;
-                  int Result=Client.WriteArea(S7AreaDB,1,0,1,Buffer);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
+
+                  Serial.print("Write to PLC");
+
+                  // int ReadArea(int Area, uint16_t DBNumber, uint16_t Start, uint16_t Amount, void *pUsrData);
+                  // Area: Area identifier
+                  // DBNumber: DB Number if  Area = S7AreaDB, otherwise is ignored.
+                  // Start: Offset to start
+                  // Amount: Amount of words to read (1)
+                  // pUsrData: Address of user buffer.
+                  
+                  Buffer[4] = 0;
+
+                  // Valore di prova 1
+                  float f = 123.45;
+                  byte* bytes = (byte*)&f;
+
+                  // Valore di prova 2
+                  float f2 = 656.99;
+
+
+                  // Valore di prova intero
+                  int pippo = 5528;
+
+                  // Reverse4 exchanges (Big<->Little endian) the bytes inside a float/dword/dint (4 bytes variable)
+                  Reverse4(&f);
+                  Reverse4(&f2);
+
+                  // Reverse2 exchanges (Big<->Little endian) the bytes inside a word/int (2 bytes variable)
+                  Reverse2(&pippo);
+
+                  int Result=Client.WriteArea(S7AreaDB,1,4,sizeof(float),&f);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
                   if (Result==0){Serial.println("DB write OK");}
                   else {Serial.println("DB write NOK");}
+                   
+
+                   int Result1=Client.WriteArea(S7AreaDB,1,8,sizeof(float),&f2);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
+                  if (Result1==0){Serial.println("DB write OK");}
+                  else {Serial.println("DB write NOK");}
+
+                  int Result2=Client.WriteArea(S7AreaDB,1,12,sizeof(int),&pippo);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
+                  if (Result2==0){Serial.println("DB write OK");}
+                  else {Serial.println("DB write NOK");}
+
+                  
+                   
+                   
                    }
+
+
+//----------------------------------------------------------------------
+// Reverse float/dword/dint
+//----------------------------------------------------------------------
+void Reverse4(void *ptr)
+{
+  byte *pb;
+  byte tmp;
+  pb=(byte*)(ptr);
+  // Swap byte 4 with byte 1
+  tmp=*(pb+3);
+  *(pb+3)=*pb;
+  *pb=tmp;
+  // Swap byte 3 with byte 2
+  tmp=*(pb+2);
+  *(pb+2)=*(pb+1);
+  *(pb+1)=tmp;
+ }
+//----------------------------------------------------------------------
+// Reverse word/int
+//----------------------------------------------------------------------
+void Reverse2(void *ptr)
+{
+  byte *pb;
+  byte tmp;
+  pb=(byte*)(ptr);
+  // Swap byte 2 with byte 1
+  tmp=*(pb+1);
+  *(pb+1)=*pb;
+  *pb=tmp;
+ }
