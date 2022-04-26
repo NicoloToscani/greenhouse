@@ -1,10 +1,21 @@
+#include <SimpleDHT.h>
 
 #include <Platform.h>
-#include "Settimino.h"
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0x08, 0xE11 }; //remamber to set the unique MAC address to each of Your Arduino that is connected to the network
-IPAddress Local(192,168,0,51); // The IP address of Arduino
-IPAddress PLC(192,168,0,55);   // The IP address of PLC
-IPAddress Gateway(192, 168, 0, 1);// check it by typing IPCONFIG in CMD
+#include <Settimino.h>
+
+
+// Inizializzo variabili sensore luce
+int light;
+
+// Inizializzo variabili sensore DHT11 (temperatura, umidità)
+int pinDHT11 = 32;
+SimpleDHT11 dht11(pinDHT11);
+
+
+byte mac[] = { 0xA8, 0x61, 0x0A, 0xAE, 0x84, 0xAE }; //remamber to set the unique MAC address to each of Your Arduino that is connected to the network
+IPAddress Local(192,168,100,10); // The IP address of Arduino
+IPAddress PLC(192,168,100,1);   // The IP address of PLC
+IPAddress Gateway(192, 168, 100, 1);// check it by typing IPCONFIG in CMD
 IPAddress Subnet(255, 255, 255, 0); // check it by typing IPCONFIG in CMD
 
 int DBNum = 1; // This DB must be present in your PLC
@@ -15,7 +26,9 @@ byte Compare_old_PLC_inputs_byte = 0;
 S7Client Client; //the name "Client" means that if we will use this name it will be related to our PLC. It's like calling PLC by settimino library
 
 
+
 void setup() {
+              Serial.print("Setup");
               Serial.begin(115200);  //thanks to this we will be able to display some mesages on Arduino "Serial Monitor"
               EthernetInit(mac, Local); //initialization of Ethernet library     
               delay(2000); //not nessesery, but it is good to wait some time after starting the initialization
@@ -23,8 +36,8 @@ void setup() {
               Serial.println("Cable connected");  //those two lines are just the information on Serial Monitor that we are connected to the network by the cable
               Serial.print("Local IP address : "); //but after loading the program to Arduino, You schould open CMD and type "ping 192.168.0.51" or Your Arduino IP to see is it connected
               Serial.println(Ethernet.localIP()); //this will display Your Arduino IP
-              pinMode(34,INPUT);
-              pinMode(41,INPUT);
+              // pinMode(34,INPUT);
+              // pinMode(41,INPUT);
               }
 
 bool Connect() //this is the function of connection to PLC, but first have a look at first line in LOOP!
@@ -37,17 +50,41 @@ bool Connect() //this is the function of connection to PLC, but first have a loo
               }
 
 
-
-
 void loop() //OB1
             { 
-            while (!Client.Connected){if (Connect()==0){delay(500);}  }  //if everything is fine this line schould be made only once. It is checking are we connected with PLC, if not then the program is jumping to CONNECT function
-            PLC_Inputs();
+
+            // If PLC is connected
+            while (!Client.Connected){
+              if (Connect()==0){delay(500);}  
+              }  //if everything is fine this line schould be made only once. It is checking are we connected with PLC, if not then the program is jumping to CONNECT function
             
-            //delay(500);  
+            // PLC_Inputs(); // Read from PLC
+
+            // Read sensor data
+            
+            // lettura valori sensore luce
+            light = analogRead(34);            
+            int data = map(light, 0, 4096, 0, 100);
+        
+            // lettura valori sensore DHT11  
+            byte temperature = 0;
+            byte humidity = 0;
+            int err = SimpleDHTErrSuccess;
+            if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+              Serial.print("Read DHT11 failed, err="); Serial.print(SimpleDHTErrCode(err));
+              Serial.print(","); Serial.println(SimpleDHTErrDuration(err)); delay(1000);
+              // return;
             }
 
 
+            // After read sensor data send values to PLC
+            WriteToPLC(); // Write values to PLC
+            
+            delay(500);  
+            }
+
+
+// Read PLC Input
 void PLC_Inputs(){
                   PLC_inputs_byte = 0;
                   if(!digitalRead(34)){PLC_inputs_byte = PLC_inputs_byte | 1;}
@@ -58,10 +95,84 @@ void PLC_Inputs(){
                   Compare_old_PLC_inputs_byte = PLC_inputs_byte; //write current value to compare variable
                   }
 
-
+// Write value to PLC
 void WriteToPLC(){
-                  Buffer[0] = PLC_inputs_byte;
-                  int Result=Client.WriteArea(S7AreaDB,1,0,1,Buffer);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
+
+                  Serial.print("Write to PLC");
+
+                  // int ReadArea(int Area, uint16_t DBNumber, uint16_t Start, uint16_t Amount, void *pUsrData);
+                  // Area: Area identifier
+                  // DBNumber: DB Number if  Area = S7AreaDB, otherwise is ignored.
+                  // Start: Offset to start
+                  // Amount: Amount of words to read (1)
+                  // pUsrData: Address of user buffer.
+                  
+                  Buffer[4] = 0;
+
+                  // Valore di prova 1
+                  float f = 123.45;
+                  byte* bytes = (byte*)&f;
+
+                  // Valore di prova 2
+                  float f2 = 656.99;
+
+
+                  // Valore di prova intero
+                  int pippo = 5528;
+
+                  // Reverse4 exchanges (Big<->Little endian) the bytes inside a float/dword/dint (4 bytes variable)
+                  Reverse4(&f);
+                  Reverse4(&f2);
+
+                  // Reverse2 exchanges (Big<->Little endian) the bytes inside a word/int (2 bytes variable)
+                  Reverse2(&pippo);
+
+                  int Result=Client.WriteArea(S7AreaDB,1,4,sizeof(float),&f);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
                   if (Result==0){Serial.println("DB write OK");}
                   else {Serial.println("DB write NOK");}
+                   
+
+                   int Result1=Client.WriteArea(S7AreaDB,1,8,sizeof(float),&f2);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
+                  if (Result1==0){Serial.println("DB write OK");}
+                  else {Serial.println("DB write NOK");}
+
+                  int Result2=Client.WriteArea(S7AreaDB,1,12,sizeof(int),&pippo);  //we are trying to write one byte to PLC (DB_area,DB1,from address 0, from Buffer array)
+                  if (Result2==0){Serial.println("DB write OK");}
+                  else {Serial.println("DB write NOK");}
+
+                  
+                   
+                   
                    }
+
+
+//----------------------------------------------------------------------
+// Reverse float/dword/dint
+//----------------------------------------------------------------------
+void Reverse4(void *ptr)
+{
+  byte *pb;
+  byte tmp;
+  pb=(byte*)(ptr);
+  // Swap byte 4 with byte 1
+  tmp=*(pb+3);
+  *(pb+3)=*pb;
+  *pb=tmp;
+  // Swap byte 3 with byte 2
+  tmp=*(pb+2);
+  *(pb+2)=*(pb+1);
+  *(pb+1)=tmp;
+ }
+//----------------------------------------------------------------------
+// Reverse word/int
+//----------------------------------------------------------------------
+void Reverse2(void *ptr)
+{
+  byte *pb;
+  byte tmp;
+  pb=(byte*)(ptr);
+  // Swap byte 2 with byte 1
+  tmp=*(pb+1);
+  *(pb+1)=*pb;
+  *pb=tmp;
+ }
