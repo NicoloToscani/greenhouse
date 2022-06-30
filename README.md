@@ -26,4 +26,4 @@ This project is build with students of ITIS Galilei (San Secondo Parmense - PR).
 [LiveCharts](https://lvcharts.net/): real time data visualization for .NET library
 
 ## HMI
-![hmi](docs/hmi.png)
+![hmi](docs/hmi_greenhouse.png)
